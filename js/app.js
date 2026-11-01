@@ -62,7 +62,7 @@
           : "优惠券";
       return {
         main: `满 ${fmt(rule.fromValue)} 元 送 ${gift}（价值 ¥${fmt(rule.toValue)}）`,
-        sub: `额外返值 ≈ ${fmt((rule.toValue / rule.fromValue) * 100)}%`,
+        sub: `额外返值 ≈ ${rewardText(rule.fromValue, rule.toValue)}`,
       };
     }
     return {
@@ -190,8 +190,8 @@
         <p>10 元攒多少积分？100 积分能抵多少停车费和优惠券？网友互助记录，人人可查、人人可补。</p>
         ${
           Api.getRatioStyle() === "cash"
-            ? '<div class="ratio-hint">🧮 全链路返现按 <b>1/N（%）</b> 展示：数字越大越划算（如 1% = 每花 100 元返 1 元），可在右上角 ⚙️ 设置里切换为倍率显示</div>'
-            : '<div class="ratio-hint">🧮 全链路倍率按 <b>N:1</b> 展示：数字越小越划算（如 100:1 = 每花 100 元返 1 元），右上角 ⚙️ 设置里可切换为返现百分比显示</div>'
+            ? '<div class="ratio-hint">🧮 全链路倍率与满额赠礼按 <b>1:N（百分比）</b> 展示：数字越大越划算（如 1% = 每花 100 元返 1 元），右上角 ⚙️ 设置可切换为倍率显示</div>'
+            : '<div class="ratio-hint">🧮 全链路倍率与满额赠礼按 <b>N:1</b> 展示：数字越小越划算（如 100:1 = 每花 100 元返 1 元），右上角 ⚙️ 设置可切换为返现百分比</div>'
         }
         ${
           state.mode === "demo"
@@ -271,11 +271,17 @@
     return one ? `<span>🧮 理论全链路 <b>${one}</b></span>` : "";
   }
 
+  function rewardText(fromV, toV) {
+    return Api.getRatioStyle() === "cash"
+      ? `${fmt((toV / fromV) * 100)}%（返现）`
+      : `${fmt(fromV / toV)}:1`;
+  }
+
   function perkCardHTML(rules) {
     const perks = rules.filter((r) => r.kind === "perk" && r.fromValue > 0 && r.toValue > 0);
     if (!perks.length) return "";
     const best = perks.reduce((a, b) => (b.toValue / b.fromValue > a.toValue / a.fromValue ? b : a));
-    return `<span>🎁 最佳赠礼 <b>返值 ${fmt((best.toValue / best.fromValue) * 100)}%</b>（满 ${fmt(best.fromValue)} 元）</span>`;
+    return `<span>🎁 最佳赠礼 <b>${rewardText(best.fromValue, best.toValue)}</b>（满 ${fmt(best.fromValue)} 元）</span>`;
   }
 
   function ruleCard(rule) {
