@@ -166,7 +166,7 @@
     $("#app").innerHTML = `
       <section class="hero">
         <h1>一起记下每家商场的积分倍率</h1>
-        <p>x 元攒多少积分？z 积分能抵多少停车费和优惠券？网友互助记录，人人可查、人人可补。</p>
+        <p>10 元攒多少积分？100 积分能抵多少停车费和优惠券？网友互助记录，人人可查、人人可补。</p>
         ${
           Api.getRatioStyle() === "cash"
             ? '<div class="ratio-hint">🧮 全链路返现按 <b>1/N（%）</b> 展示：数字越大越划算（如 1% = 每花 100 元返 1 元），可在右上角 ⚙️ 设置里切换为倍率显示</div>'
@@ -293,13 +293,13 @@
         ${fullLine}
       </section>
       <div class="section-head">
-        <h3>📈 积分获取（x 元 = y 积分）</h3>
+        <h3>📈 积分获取（如：10 元 = 1 积分）</h3>
         <div class="line"></div>
         <button class="btn btn-ghost" data-add-rule="earn" data-mall="${esc(mall.id)}">＋ 记录一条</button>
       </div>
       ${earns.length ? `<div class="rule-list">${earns.map(ruleCard).join("")}</div>` : `<div class="empty"><span class="emoji">🪙</span>还没有获取规则的记录，快来补充第一条</div>`}
       <div class="section-head">
-        <h3>📉 积分兑换（z 积分 = w 元）</h3>
+        <h3>📉 积分兑换（如：100 积分 = 10 元）</h3>
         <div class="line"></div>
         <button class="btn btn-ghost" data-add-rule="redeem" data-mall="${esc(mall.id)}">＋ 记录一条</button>
       </div>
