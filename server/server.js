@@ -52,6 +52,20 @@ api.post("/malls", (req, res) => {
   res.status(201).json(mall);
 });
 
+api.put("/malls/:id", (req, res) => {
+  const { name, city, address } = req.body || {};
+  if (!name || !String(name).trim()) return badRequest(res, "缺少商场名称");
+  if (!city || !String(city).trim()) return badRequest(res, "缺少城市");
+  const db = store.load();
+  const mall = db.malls.find((m) => m.id === req.params.id);
+  if (!mall) return res.status(404).json({ error: "商场不存在" });
+  mall.name = String(name).trim().slice(0, 40);
+  mall.city = String(city).trim().slice(0, 20);
+  mall.address = String(address || "").trim().slice(0, 80);
+  store.save(db);
+  res.json(mall);
+});
+
 api.get("/rules", (req, res) => {
   const db = store.load();
   if (req.query.mall) {

@@ -99,6 +99,9 @@
       async createMall(data) {
         return request("/api/malls", { method: "POST", body: JSON.stringify(data) });
       },
+      async updateMall(id, data) {
+        return request("/api/malls/" + id, { method: "PUT", body: JSON.stringify(data) });
+      },
       async createRule(data) {
         return request("/api/rules", { method: "POST", body: JSON.stringify(data) });
       },
@@ -130,6 +133,16 @@
           createdAt: new Date().toISOString().slice(0, 10),
         };
         db.malls.push(mall);
+        Demo.saveDb(db);
+        return mall;
+      },
+      async updateMall(id, data) {
+        const db = await Demo.loadDb();
+        const mall = db.malls.find((m) => m.id === id);
+        if (!mall) throw new Error("商场不存在");
+        mall.name = data.name;
+        mall.city = data.city;
+        mall.address = data.address || "";
         Demo.saveDb(db);
         return mall;
       },

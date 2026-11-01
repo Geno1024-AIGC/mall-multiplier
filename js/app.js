@@ -12,6 +12,8 @@
     draftMallId: null,
     nearCity: null,
     mallPrefill: null,
+    quickKind: "earn",
+    editingMallId: null,
   };
 
   let votes = {};
@@ -334,24 +336,25 @@
       <section class="mall-head" style="--h:${hue(mall.name)}">
         <h2>${esc(mall.name)}</h2>
         <div class="addr">📍 ${esc(mall.city)}${mall.address ? " · " + esc(mall.address) : ""}</div>
+        <div class="mall-head-actions"><button class="btn btn-ghost" data-edit-mall data-mall="${esc(mall.id)}">✏️ 编辑商场信息</button></div>
         ${fullLine}
       </section>
       <div class="section-head">
         <h3>📈 积分获取（如：10 元 = 1 积分）</h3>
         <div class="line"></div>
-        <button class="btn btn-ghost" data-add-rule="earn" data-mall="${esc(mall.id)}">＋ 记录一条</button>
+        <button class="btn btn-ghost" data-add-rule="earn" data-mall="${esc(mall.id)}">＋ 详细记录</button>
       </div>
       ${earns.length ? `<div class="rule-list">${earns.map(ruleCard).join("")}</div>` : `<div class="empty"><span class="emoji">🪙</span>还没有获取规则的记录，快来补充第一条</div>`}
       <div class="section-head">
         <h3>📉 积分兑换（如：100 积分 = 10 元）</h3>
         <div class="line"></div>
-        <button class="btn btn-ghost" data-add-rule="redeem" data-mall="${esc(mall.id)}">＋ 记录一条</button>
+        <button class="btn btn-ghost" data-add-rule="redeem" data-mall="${esc(mall.id)}">＋ 详细记录</button>
       </div>
       ${redeems.length ? `<div class="rule-list">${redeems.map(ruleCard).join("")}</div>` : `<div class="empty"><span class="emoji">🎟️</span>还没有兑换规则的记录，快来补充第一条</div>`}
       <div class="section-head">
         <h3>🎁 消费赠礼（满额直接送）</h3>
         <div class="line"></div>
-        <button class="btn btn-ghost" data-add-rule="perk" data-mall="${esc(mall.id)}">＋ 记录一条</button>
+        <button class="btn btn-ghost" data-add-rule="perk" data-mall="${esc(mall.id)}">＋ 详细记录</button>
       </div>
       ${perks.length ? `<div class="rule-list">${perks.map(ruleCard).join("")}</div>` : `<div class="empty"><span class="emoji">🎁</span>还没有赠礼记录，快来补充第一条</div>`}`;
   }
@@ -535,6 +538,58 @@
       openDialog("#mall-dialog");
     });
 
+    $("#quick-btn").addEventListener("click", openQuickDialog);
+
+    $("#quick-kind").addEventListener("click", (e) => {
+      const btn = e.target.closest(".seg");
+      if (!btn) return;
+      $$("#quick-kind .seg").forEach((b) => b.classList.toggle("active", b === btn));
+      state.quickKind = btn.dataset.kind;
+      if (state.quickKind === "perk") $("#quick-form").redeemType.value = "parking";
+      quickUpdateFields();
+    });
+
+    $("#quick-form").redeemType.addEventListener("change", () => quickUpdateFields());
+
+    $("#quick-form").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const f = e.target;
+      const mallId = f.mall.value;
+      if (!mallId) {
+        toast("还没有已收录商场，请先用「＋ 添加商场」收录一家", "bad");
+        return;
+      }
+      const data = {
+        mallId,
+        kind: state.quickKind,
+        scene: f.scene.value.trim() || defaultScene(state.quickKind, f.redeemType.value),
+        fromValue: parseFloat(f.fromValue.value),
+        toValue: parseFloat(f.toValue.value),
+        redeemType: state.quickKind === "redeem" || state.quickKind === "perk" ? f.redeemType.value : undefined,
+        rewardHours:
+          state.quickKind === "perk" && f.redeemType.value === "parking" && f.rewardHours.value
+            ? parseFloat(f.rewardHours.value)
+            : undefined,
+        tags: f.tags.value.split(/[,，]/).map((t) => t.trim()).filter(Boolean),
+        note: f.note.value.trim(),
+        source: f.source.value.trim(),
+        date: f.date.value || new Date().toISOString().slice(0, 10),
+      };
+      if (!(data.fromValue > 0) || !(data.toValue >= 0)) {
+        toast("请填写有效的数值", "bad");
+        return;
+      }
+      try {
+        await state.service.createRule(data);
+        $("#quick-dialog").close();
+        await loadAll();
+        render();
+        toast("已记录，感谢贡献 ✔", "ok");
+      } catch (err) {
+        toast("保存失败：" + err.message, "bad");
+      }
+    });
+
     $("#mall-province").addEventListener("change", (e) => {
       fillCities(e.target.value);
     });
@@ -636,15 +691,31 @@
         return;
       }
       try {
-        const mall = await state.service.createMall({ name, city, address: f.address.value.trim() });
-        await loadAll();
-        f.reset();
-        $("#mall-dialog").close();
-        toast("商场已收录 ✔", "ok");
-        location.hash = "#/mall/" + encodeURIComponent(mall.id);
+        if (state.editingMallId) {
+          const updated = await state.service.updateMall(state.editingMallId, { name, city, address: f.address.value.trim() });
+          await loadAll();
+          f.reset();
+          $("#mall-dialog").close();
+          $("#mall-dlg-title").textContent = "添加商场";
+          const idx = state.malls.findIndex((m) => m.id === updated.id);
+          if (idx >= 0) render();
+          toast("商场信息已更新 ✔", "ok");
+        } else {
+          const mall = await state.service.createMall({ name, city, address: f.address.value.trim() });
+          await loadAll();
+          f.reset();
+          $("#mall-dialog").close();
+          toast("商场已收录 ✔", "ok");
+          location.hash = "#/mall/" + encodeURIComponent(mall.id);
+        }
       } catch (err) {
         toast("保存失败：" + err.message, "bad");
       }
+    });
+
+    $("#mall-dialog").addEventListener("close", () => {
+      state.editingMallId = null;
+      $("#mall-dlg-title").textContent = "添加商场";
     });
 
     $("#rule-kind").addEventListener("click", (e) => {
@@ -733,6 +804,13 @@
         location.hash = "#/";
         return;
       }
+      const editBtn = e.target.closest("[data-edit-mall]");
+      if (editBtn) {
+        e.preventDefault();
+        const mall = state.malls.find((m) => m.id === editBtn.dataset.mall);
+        if (mall) openMallEditor(mall);
+        return;
+      }
       const addBtn = e.target.closest("[data-add-rule]");
       if (addBtn) {
         state.draftMallId = addBtn.dataset.mall;
@@ -790,6 +868,68 @@
       $("#rule-from-label").innerHTML = '单笔实付满（元）<em>*</em>';
       $("#rule-to-label").innerHTML = '赠出价值（元）<em>*</em>';
     }
+  }
+
+  function defaultScene(kind, rtype) {
+    if (kind === "earn") return "全场消费";
+    if (kind === "perk") return rtype === "parking" ? "消费满额赠停车券" : "消费满额赠优惠券";
+    return rtype === "parking" ? "停车费抵扣" : "优惠券兑换";
+  }
+
+  function quickUpdateFields() {
+    const f = $("#quick-form");
+    const showType = state.quickKind === "redeem" || state.quickKind === "perk";
+    $("#quick-type-field").hidden = !showType;
+    $("#quick-hours-field").hidden = !(state.quickKind === "perk" && f.redeemType.value === "parking");
+    const from = $("#quick-from-label");
+    const to = $("#quick-to-label");
+    if (state.quickKind === "earn") {
+      from.innerHTML = '消费金额（元）<em>*</em>';
+      to.innerHTML = '获得积分 <em>*</em>';
+    } else if (state.quickKind === "redeem") {
+      from.innerHTML = '所需积分 <em>*</em>';
+      to.innerHTML = '抵扣价值（元）<em>*</em>';
+    } else {
+      from.innerHTML = '单笔实付满（元）<em>*</em>';
+      to.innerHTML = '赠出价值（元）<em>*</em>';
+    }
+  }
+
+  function openQuickDialog() {
+    const sel = $("#quick-mall");
+    sel.innerHTML = state.malls.length
+      ? state.malls.map((m) => `<option value="${esc(m.id)}">${esc(m.name)}（${esc(m.city)}）</option>`).join("")
+      : '<option value="">暂无已收录商场</option>';
+    const form = $("#quick-form");
+    form.reset();
+    state.quickKind = "earn";
+    $$("#quick-kind .seg").forEach((b) => b.classList.toggle("active", b.dataset.kind === "earn"));
+    quickUpdateFields();
+    openDialog("#quick-dialog");
+  }
+
+  function openMallEditor(mall) {
+    state.editingMallId = mall.id;
+    state.mallPrefill = null;
+    initMallDialog();
+    $("#mall-dlg-title").textContent = "编辑商场信息";
+    const f = $("#mall-form");
+    f.name.value = mall.name;
+    f.address.value = mall.address || "";
+    const region =
+      Regions.find((r) => r.c.includes(mall.city)) ||
+      Regions.find((r) => cityMatch(mall.city, r.n)) ||
+      Regions.find((r) => r.c.find((n) => cityMatch(n, mall.city)));
+    if (region) {
+      $("#mall-province").value = region.n;
+      const cSel = fillCities(region.n);
+      const exact = region.c.find((n) => cityMatch(n, mall.city));
+      if (exact) {
+        cSel.value = exact;
+        cSel.disabled = false;
+      }
+    }
+    openDialog("#mall-dialog");
   }
 
   function openDialog(sel) {
