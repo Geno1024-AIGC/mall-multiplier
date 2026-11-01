@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>积分倍率图鉴 · 商场积分互助百科</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🧾</text></svg>">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body data-view="home">
+  <div class="bg-orbs" aria-hidden="true">
+    <div class="orb orb-1"></div>
+    <div class="orb orb-2"></div>
+    <div class="orb orb-3"></div>
+  </div>
+
+  <header class="topbar">
+    <a class="brand" href="#/">
+      <span class="brand-logo">🧾</span>
+      <span class="brand-name">积分倍率图鉴</span>
+    </a>
+    <div class="topbar-search">
+      <input id="search" type="search" placeholder="搜索商场名称 / 城市…" autocomplete="off">
+    </div>
+    <div class="topbar-actions">
+      <span id="mode-badge" class="mode-badge mode-connecting"><span class="dot"></span>连接中…</span>
+      <button id="api-btn" class="icon-btn" title="后端 API 设置">⚙️</button>
+      <button id="theme-toggle" class="icon-btn" title="切换深浅色">🌙</button>
+      <button id="add-mall-btn" class="btn btn-primary">＋ 添加商场</button>
+    </div>
+  </header>
+
+  <main id="app"></main>
+
+  <footer class="footer">
+    <p>积分倍率图鉴 —— 由网友互助维护的商场积分情报站，数据仅供参考，请以商场实际规则为准。</p>
+  </footer>
+
+  <dialog id="mall-dialog" class="dlg">
+    <form id="mall-form" method="dialog" novalidate>
+      <h3 class="dlg-title">添加商场</h3>
+      <label class="field">
+        <span>商场名称 <em>*</em></span>
+        <input name="name" type="text" required maxlength="40" placeholder="例如：上海环球港">
+      </label>
+      <label class="field">
+        <span>城市 <em>*</em></span>
+        <input name="city" type="text" required maxlength="20" placeholder="例如：上海">
+      </label>
+      <label class="field">
+        <span>地址</span>
+        <input name="address" type="text" maxlength="80" placeholder="选填">
+      </label>
+      <div class="dlg-actions">
+        <button type="button" class="btn btn-ghost" data-close>取消</button>
+        <button type="submit" class="btn btn-primary">保存</button>
+      </div>
+    </form>
+  </dialog>
+
+  <dialog id="rule-dialog" class="dlg">
+    <form id="rule-form" method="dialog" novalidate>
+      <h3 class="dlg-title">记录一条倍率</h3>
+      <div class="segmented" id="rule-kind">
+        <button type="button" class="seg active" data-kind="earn">📈 积分获取</button>
+        <button type="button" class="seg" data-kind="redeem">📉 积分兑换</button>
+      </div>
+      <label class="field">
+        <span>适用场景 <em>*</em></span>
+        <input name="scene" type="text" required maxlength="60" placeholder="例如：全场消费 / 会员日 / 停车费抵扣">
+      </label>
+      <div class="field-row">
+        <label class="field">
+          <span id="rule-from-label">消费金额（元）<em>*</em></span>
+          <input name="fromValue" type="number" min="0" step="any" required placeholder="1">
+        </label>
+        <label class="field">
+          <span id="rule-to-label">获得积分 <em>*</em></span>
+          <input name="toValue" type="number" min="0" step="any" required placeholder="1">
+        </label>
+      </div>
+      <label class="field">
+        <span>标签</span>
+        <input name="tags" type="text" maxlength="60" placeholder="逗号分隔，例如：会员日, 停车">
+      </label>
+      <label class="field">
+        <span>备注说明</span>
+        <input name="note" type="text" maxlength="120" placeholder="选填，例如：特殊品类除外">
+      </label>
+      <div class="field-row">
+        <label class="field">
+          <span>信息来源</span>
+          <input name="source" type="text" maxlength="30" placeholder="例如：商场公示 / 会员群 / 亲测">
+        </label>
+        <label class="field">
+          <span>日期</span>
+          <input name="date" type="date">
+        </label>
+      </div>
+      <div class="dlg-actions">
+        <button type="button" class="btn btn-ghost" data-close>取消</button>
+        <button type="submit" class="btn btn-primary">提交倍率</button>
+      </div>
+    </form>
+  </dialog>
+
+  <dialog id="api-dialog" class="dlg">
+    <form id="api-form" method="dialog" novalidate>
+      <h3 class="dlg-title">后端 API 设置</h3>
+      <p class="dlg-hint">填入后端地址即可联网同步，留空则使用浏览器本地存储（演示模式）。<br>本地跑后端时填：<code>http://localhost:8787</code></p>
+      <label class="field">
+        <span>API 地址</span>
+        <input name="base" type="url" placeholder="https://your-server.example.com">
+      </label>
+      <div class="dlg-actions">
+        <button type="button" class="btn btn-ghost" data-close>取消</button>
+        <button type="submit" class="btn btn-primary">保存并重连</button>
+      </div>
+    </form>
+  </dialog>
+
+  <div id="toast-root"></div>
+
+  <script defer src="js/api.js"></script>
+  <script defer src="js/app.js"></script>
+</body>
+</html>
