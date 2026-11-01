@@ -1,8 +1,8 @@
 {
   "malls": [
-    { "id": "m1", "name": "上海环球港", "city": "上海", "address": "普陀区中山北路3300号", "createdAt": "2026-10-01" },
-    { "id": "m2", "name": "北京SKP", "city": "北京", "address": "朝阳区建国路87号", "createdAt": "2026-10-02" },
-    { "id": "m3", "name": "深圳万象城", "city": "深圳", "address": "罗湖区宝安南路1881号", "createdAt": "2026-10-03" }
+    { "id": "m1", "name": "上海环球港", "city": "上海市", "address": "普陀区中山北路3300号", "createdAt": "2026-10-01" },
+    { "id": "m2", "name": "北京SKP", "city": "北京市", "address": "朝阳区建国路87号", "createdAt": "2026-10-02" },
+    { "id": "m3", "name": "深圳万象城", "city": "深圳市", "address": "罗湖区宝安南路1881号", "createdAt": "2026-10-03" }
   ],
   "rules": [
     {

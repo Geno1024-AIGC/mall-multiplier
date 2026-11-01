@@ -43,10 +43,20 @@
         <span>商场名称 <em>*</em></span>
         <input name="name" type="text" required maxlength="40" placeholder="例如：上海环球港">
       </label>
-      <label class="field">
-        <span>城市 <em>*</em></span>
-        <input name="city" type="text" required maxlength="20" placeholder="例如：上海">
-      </label>
+      <div class="field-row">
+        <label class="field">
+          <span>省 / 直辖市 <em>*</em></span>
+          <select id="mall-province" name="province" required>
+            <option value="">选择省级</option>
+          </select>
+        </label>
+        <label class="field">
+          <span>城市 <em>*</em></span>
+          <select id="mall-city" name="city" required disabled>
+            <option value="">先选省级</option>
+          </select>
+        </label>
+      </div>
       <label class="field">
         <span>地址</span>
         <input name="address" type="text" maxlength="80" placeholder="选填">
@@ -133,6 +143,7 @@
 
   <div id="toast-root"></div>
 
+  <script defer src="js/regions.js"></script>
   <script defer src="js/api.js"></script>
   <script defer src="js/app.js"></script>
 </body>

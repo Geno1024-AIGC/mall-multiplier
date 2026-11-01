@@ -306,7 +306,30 @@
       ${redeems.length ? `<div class="rule-list">${redeems.map(ruleCard).join("")}</div>` : `<div class="empty"><span class="emoji">🎟️</span>还没有兑换规则的记录，快来补充第一条</div>`}`;
   }
 
+  function initMallDialog() {
+    const pSel = $("#mall-province");
+    const cSel = $("#mall-city");
+    if (!pSel.options.length) {
+      pSel.innerHTML = '<option value="">选择省级</option>' + Regions.map((r) => `<option value="${r.n}">${r.n}</option>`).join("");
+    }
+    cSel.innerHTML = '<option value="">先选省级</option>';
+    cSel.disabled = true;
+  }
+
   function bindStatic() {
+    $("#add-mall-btn").addEventListener("click", () => {
+      initMallDialog();
+      openDialog("#mall-dialog");
+    });
+
+    $("#mall-province").addEventListener("change", (e) => {
+      const cSel = $("#mall-city");
+      const region = Regions.find((r) => r.n === e.target.value);
+      cSel.innerHTML = region
+        ? '<option value="">选择城市</option>' + region.c.map((n) => `<option value="${n}">${n}</option>`).join("")
+        : '<option value="">先选省级</option>';
+      cSel.disabled = !region;
+    });
     $("#search").addEventListener("input", (e) => {
       state.query = e.target.value;
       if (document.body.dataset.view === "mall") {
@@ -315,8 +338,6 @@
       }
       renderHome();
     });
-
-    $("#add-mall-btn").addEventListener("click", () => openDialog("#mall-dialog"));
 
     $("#api-btn").addEventListener("click", () => {
       $("#api-form").elements.base.value = Api.getBase();
