@@ -233,6 +233,19 @@ main { max-width: 1120px; margin: 0 auto; padding: clamp(20px, 4vw, 44px) clamp(
   border: 1px solid color-mix(in srgb, var(--warn) 30%, transparent);
 }
 
+.hero .ratio-hint {
+  margin: 14px auto 0;
+  display: block;
+  max-width: 640px;
+  padding: 8px 18px;
+  border-radius: 999px;
+  font-size: 0.82rem;
+  color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 9%, transparent);
+  border: 1px solid color-mix(in srgb, var(--accent) 25%, transparent);
+}
+.hero .ratio-hint b { font-weight: 800; }
+
 .stat-row {
   display: flex;
   justify-content: center;
