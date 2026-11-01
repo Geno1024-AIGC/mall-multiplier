@@ -106,7 +106,12 @@
 
   <dialog id="api-dialog" class="dlg">
     <form id="api-form" method="dialog" novalidate>
-      <h3 class="dlg-title">后端 API 设置</h3>
+      <h3 class="dlg-title">设置</h3>
+      <div class="segmented" id="ratio-style">
+        <button type="button" class="seg" data-style="ratio">倍率 N:1</button>
+        <button type="button" class="seg" data-style="cash">返现 1/N（%）</button>
+      </div>
+      <p class="dlg-hint">全链路值：把同一商场的最高获取率与最高兑换率相乘，为理论值，仅代表理想消费闭环。</p>
       <p class="dlg-hint">填入后端地址即可联网同步，留空则使用浏览器本地存储（演示模式）。<br>本地跑后端时填：<code>http://localhost:8787</code></p>
       <label class="field">
         <span>API 地址</span>

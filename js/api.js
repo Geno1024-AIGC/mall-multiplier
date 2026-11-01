@@ -1,6 +1,15 @@
 (function () {
   const BASE_KEY = "mallrate_api_base";
   const DEMO_DB_KEY = "mallrate_demo_db";
+  const RATIO_KEY = "mallrate_ratio_style";
+
+  function getRatioStyle() {
+    return localStorage.getItem(RATIO_KEY) === "cash" ? "cash" : "ratio";
+  }
+
+  function setRatioStyle(v) {
+    localStorage.setItem(RATIO_KEY, v === "cash" ? "cash" : "ratio");
+  }
 
   function getBase() {
     return localStorage.getItem(BASE_KEY) || "";
@@ -56,6 +65,8 @@
     getBase,
     setBase,
     ping,
+    getRatioStyle,
+    setRatioStyle,
     remote: {
       async listMalls() {
         return request("/api/malls");

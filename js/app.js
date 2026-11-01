@@ -152,11 +152,12 @@
         const list = rulesByMall[m.id] || [];
         const earns = bestEarn[m.id] ? `最高 <b>${fmt(bestEarn[m.id])} 积分/元</b>` : "暂无积分获取记录";
         const redeems = bestRedeem[m.id] ? `兑换 <b>¥${fmt(bestRedeem[m.id])}/百积分</b>` : "暂无兑换记录";
+        const full = fullRateText(list);
         return `
         <a class="mall-card" style="--h:${hue(m.name)}" href="#/mall/${encodeURIComponent(m.id)}">
           <h3>${esc(m.name)}</h3>
           <div class="where">📍 ${esc(m.city)}${m.address ? " · " + esc(m.address) : ""}</div>
-          <div class="brief"><span>📈 ${earns}</span><span>📉 ${redeems}</span></div>
+          <div class="brief"><span>📈 ${earns}</span><span>📉 ${redeems}</span>${full ? `<span>🧮 ${full}</span>` : ""}</div>
           <div class="count-line">已登记 ${list.length} 条倍率记录</div>
         </a>`;
       })
@@ -168,7 +169,7 @@
         <p>x 元攒多少积分？z 积分能抵多少停车费和优惠券？网友互助记录，人人可查、人人可补。</p>
         ${
           state.mode === "demo"
-            ? '<div class="demo-hint">🧪 当前为演示模式：数据仅保存在你的浏览器里，部署后端后即可联网同步，右上角 ⚙️ 可设置 API 地址</div>'
+            ? '<div class="demo-hint">🧪 当前为演示模式：数据仅保存在你的浏览器里，部署后端后即可联网同步，右上角 ⚙️ 可进行设置</div>'
             : ""
         }
         <div class="stat-row">
@@ -182,6 +183,18 @@
           ? `<div class="mall-grid">${cards}</div>`
           : `<div class="empty"><span class="emoji">🛍️</span>${q ? "没有匹配的商场，换个关键词试试" : "还没有商场，点右上角「＋ 添加商场」创建第一个"}</div>`
       }`;
+  }
+
+  function fullRateText(rules) {
+    const earns = rules.filter((r) => r.kind === "earn" && r.fromValue > 0);
+    const redeems = rules.filter((r) => r.kind === "redeem" && r.fromValue > 0);
+    if (!earns.length || !redeems.length) return null;
+    const e = Math.max(...earns.map((r) => r.toValue / r.fromValue));
+    const v = Math.max(...redeems.map((r) => r.toValue / r.fromValue));
+    if (!(e > 0) || !(v > 0)) return null;
+    return Api.getRatioStyle() === "cash"
+      ? `理论返现 <b>${fmt(e * v * 100)}%</b>`
+      : `理论全链路 <b>${fmt(1 / (e * v))}:1</b>`;
   }
 
   function ruleCard(rule) {
@@ -219,11 +232,14 @@
       .filter((r) => r.kind === "redeem")
       .sort((a, b) => (b.confirms || 0) - (a.confirms || 0));
 
+    const full = fullRateText(rules);
+    const fullLine = full ? `<div class="rule-rate" style="margin-top:10px"><span class="sub">🧮 ${full}，按当前记录估算</span></div>` : "";
     $("#app").innerHTML = `
       <button class="back" data-back>← 返回商场列表</button>
       <section class="mall-head" style="--h:${hue(mall.name)}">
         <h2>${esc(mall.name)}</h2>
         <div class="addr">📍 ${esc(mall.city)}${mall.address ? " · " + esc(mall.address) : ""}</div>
+        ${fullLine}
       </section>
       <div class="section-head">
         <h3>📈 积分获取（x 元 = y 积分）</h3>
@@ -253,12 +269,20 @@
 
     $("#api-btn").addEventListener("click", () => {
       $("#api-form").elements.base.value = Api.getBase();
+      $$("#ratio-style .seg").forEach((b) => b.classList.toggle("active", b.dataset.style === Api.getRatioStyle()));
       openDialog("#api-dialog");
+    });
+
+    $("#ratio-style").addEventListener("click", (e) => {
+      const btn = e.target.closest(".seg");
+      if (!btn) return;
+      $$("#ratio-style .seg").forEach((b) => b.classList.toggle("active", b === btn));
     });
 
     $("#api-form").addEventListener("submit", async (e) => {
       e.preventDefault();
       Api.setBase(e.target.elements.base.value);
+      Api.setRatioStyle(($$("#ratio-style .seg").find((b) => b.classList.contains("active")) || {}).dataset?.style);
       $("#api-dialog").close();
       await initMode();
       render();
