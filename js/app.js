@@ -10,6 +10,8 @@
     query: "",
     ruleKind: "earn",
     draftMallId: null,
+    nearCity: null,
+    mallPrefill: null,
   };
 
   let votes = {};
@@ -125,9 +127,17 @@
     else renderHome();
   }
 
+  function cityMatch(mallCity, target) {
+    if (!mallCity || !target) return false;
+    return mallCity === target || mallCity.includes(target) || target.includes(mallCity);
+  }
+
   function renderHome() {
     const q = state.query.trim().toLowerCase();
-    const malls = state.malls.filter(
+    const base = state.nearCity
+      ? state.malls.filter((m) => cityMatch(m.city, state.nearCity.city))
+      : state.malls;
+    const malls = base.filter(
       (m) =>
         !q ||
         m.name.toLowerCase().includes(q) ||
@@ -182,11 +192,18 @@
           <div class="stat"><b>${state.rules.length}</b><span>倍率记录</span></div>
           <div class="stat"><b>${totalConfirms}</b><span>网友确认</span></div>
         </div>
+        ${
+          state.nearCity
+            ? `<div class="near-chip">📍 已定位 ${esc(state.nearCity.city)} · 该市已收录 ${base.length} 家 <button data-clear-near>✕ 清除定位筛选</button></div>`
+            : '<button class="btn btn-primary near-btn" data-near-locate>📍 定位附近的商场</button>'
+        }
       </section>
       ${
         malls.length
           ? `<div class="mall-grid">${cards}</div>`
-          : `<div class="empty"><span class="emoji">🛍️</span>${q ? "没有匹配的商场，换个关键词试试" : "还没有商场，点右上角「＋ 添加商场」创建第一个"}</div>`
+          : state.nearCity
+            ? `<div class="empty"><span class="emoji">🧭</span>${q ? "该市没有匹配的商场，换个关键词或清除定位筛选" : `${esc(state.nearCity.city)} 还没有收录商场`}<br><button class="btn btn-primary" data-add-mall-near>＋ 添加该市第一家</button></div>`
+            : `<div class="empty"><span class="emoji">🛍️</span>${q ? "没有匹配的商场，换个关键词试试" : "还没有商场，点右上角「＋ 添加商场」创建第一个"}</div>`
       }`;
   }
 
@@ -315,6 +332,19 @@
     }
     cSel.innerHTML = '<option value="">先选省级</option>';
     cSel.disabled = true;
+    if (state.mallPrefill) {
+      const prov = Regions.find((r) => r.n === state.mallPrefill.province);
+      if (prov) {
+        pSel.value = prov.n;
+        const region = fillCities(prov.n);
+        const match = region.c.find((n) => n === state.mallPrefill.city);
+        if (match) {
+          cSel.value = match;
+          cSel.disabled = false;
+        }
+      }
+      state.mallPrefill = null;
+    }
   }
 
   function fillCities(provName) {
@@ -438,8 +468,36 @@
     }
   }
 
+  function locateNearCity() {
+    if (!navigator.geolocation) {
+      toast("当前浏览器不支持地理定位", "bad");
+      return;
+    }
+    toast("正在定位，请稍候…");
+    navigator.geolocation.getCurrentPosition(
+      async (pos) => {
+        try {
+          const { province, city } = await reverseGeocode(pos.coords);
+          if (!province || !city) {
+            toast(province ? `已定位到${province}，未能精确到市` : "未能匹配到省市，请手动查找商场", "bad");
+            return;
+          }
+          state.nearCity = { province, city };
+          render();
+          window.scrollTo({ top: 0, behavior: "smooth" });
+          toast("已按 " + city + " 筛选商场", "ok");
+        } catch (err) {
+          toast(err.hint || "定位解析失败，请手动查找商场", "bad");
+        }
+      },
+      () => toast("定位失败，请允许定位权限或手动查找商场", "bad"),
+      { timeout: 10000 }
+    );
+  }
+
   function bindStatic() {
     $("#add-mall-btn").addEventListener("click", () => {
+      state.mallPrefill = null;
       initMallDialog();
       openDialog("#mall-dialog");
     });
@@ -594,6 +652,24 @@
     });
 
     $("#app").addEventListener("click", async (e) => {
+      if (e.target.closest("[data-near-locate]")) {
+        e.preventDefault();
+        locateNearCity();
+        return;
+      }
+      if (e.target.closest("[data-clear-near]")) {
+        e.preventDefault();
+        state.nearCity = null;
+        render();
+        return;
+      }
+      if (e.target.closest("[data-add-mall-near]")) {
+        e.preventDefault();
+        state.mallPrefill = state.nearCity ? { ...state.nearCity } : null;
+        initMallDialog();
+        openDialog("#mall-dialog");
+        return;
+      }
       const perspBtn = e.target.closest("[data-persp]");
       if (perspBtn) {
         e.preventDefault();
