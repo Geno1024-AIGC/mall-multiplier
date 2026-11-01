@@ -309,8 +309,9 @@
   function initMallDialog() {
     const pSel = $("#mall-province");
     const cSel = $("#mall-city");
-    if (!pSel.options.length) {
+    if (!pSel.dataset.ready) {
       pSel.innerHTML = '<option value="">选择省级</option>' + Regions.map((r) => `<option value="${r.n}">${r.n}</option>`).join("");
+      pSel.dataset.ready = "1";
     }
     cSel.innerHTML = '<option value="">先选省级</option>';
     cSel.disabled = true;
