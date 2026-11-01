@@ -75,6 +75,7 @@
       <div class="segmented" id="rule-kind">
         <button type="button" class="seg active" data-kind="earn">📈 积分获取</button>
         <button type="button" class="seg" data-kind="redeem">📉 积分兑换</button>
+        <button type="button" class="seg" data-kind="perk">🎁 消费赠礼</button>
       </div>
       <label class="field">
         <span>适用场景 <em>*</em></span>
@@ -91,11 +92,15 @@
         </label>
       </div>
       <label class="field" id="rule-type-field" hidden>
-        <span>兑换类型</span>
+        <span>赠出 / 兑换类型</span>
         <select name="redeemType">
           <option value="coupon">🎟️ 优惠券 / 消费抵扣</option>
           <option value="parking">🅿️ 停车券</option>
         </select>
+      </label>
+      <label class="field" id="rule-hours-field" hidden>
+        <span>停车时长（小时，选填）</span>
+        <input name="rewardHours" type="number" min="0.5" step="0.5" placeholder="例如：3">
       </label>
       <label class="field">
         <span>标签</span>

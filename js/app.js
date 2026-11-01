@@ -55,6 +55,16 @@
         sub: `≈ ${fmt(rule.toValue / rule.fromValue)} 积分 / 元`,
       };
     }
+    if (rule.kind === "perk") {
+      const gift =
+        rule.redeemType === "parking"
+          ? `🅿️ ${rule.rewardHours ? rule.rewardHours + " 小时" : ""}停车券`
+          : "优惠券";
+      return {
+        main: `满 ${fmt(rule.fromValue)} 元 送 ${gift}（价值 ¥${fmt(rule.toValue)}）`,
+        sub: `额外返值 ≈ ${fmt((rule.toValue / rule.fromValue) * 100)}%`,
+      };
+    }
     return {
       main: `${fmt(rule.fromValue)} 积分 = ¥${fmt(rule.toValue)}`,
       sub: `≈ ¥${fmt((rule.toValue / rule.fromValue) * 100)} / 百积分`,
@@ -163,11 +173,12 @@
         const earns = bestEarn[m.id] ? `最高 <b>${fmt(bestEarn[m.id])} 积分/元</b>` : "暂无积分获取记录";
         const redeems = bestRedeem[m.id] ? `兑换 <b>¥${fmt(bestRedeem[m.id])}/百积分</b>` : "暂无兑换记录";
         const full = fullCardHTML(list);
+        const perk = perkCardHTML(list);
         return `
         <a class="mall-card" style="--h:${hue(m.name)}" href="#/mall/${encodeURIComponent(m.id)}">
           <h3>${esc(m.name)}</h3>
           <div class="where">📍 ${esc(m.city)}${m.address ? " · " + esc(m.address) : ""}</div>
-          <div class="brief"><span>📈 ${earns}</span><span>📉 ${redeems}</span>${full}</div>
+          <div class="brief"><span>📈 ${earns}</span><span>📉 ${redeems}</span>${full}${perk}</div>
           <div class="count-line">已登记 ${list.length} 条倍率记录</div>
         </a>`;
       })
@@ -260,12 +271,19 @@
     return one ? `<span>🧮 理论全链路 <b>${one}</b></span>` : "";
   }
 
+  function perkCardHTML(rules) {
+    const perks = rules.filter((r) => r.kind === "perk" && r.fromValue > 0 && r.toValue > 0);
+    if (!perks.length) return "";
+    const best = perks.reduce((a, b) => (b.toValue / b.fromValue > a.toValue / a.fromValue ? b : a));
+    return `<span>🎁 最佳赠礼 <b>返值 ${fmt((best.toValue / best.fromValue) * 100)}%</b>（满 ${fmt(best.fromValue)} 元）</span>`;
+  }
+
   function ruleCard(rule) {
     const info = rateInfo(rule);
     const mine = votes[rule.id];
     const tags = rule.tags || [];
     let typeBadge = "";
-    if (rule.kind === "redeem" && rule.redeemType) {
+    if ((rule.kind === "redeem" || rule.kind === "perk") && rule.redeemType) {
       if (rule.redeemType === "parking" && !tags.includes("停车")) typeBadge = '<span class="tag">🅿️ 停车</span>';
       else if (rule.redeemType === "coupon" && !tags.some((t) => /券/.test(t))) typeBadge = '<span class="tag">🎟️ 券</span>';
     }
@@ -300,6 +318,9 @@
     const redeems = rules
       .filter((r) => r.kind === "redeem")
       .sort((a, b) => (b.confirms || 0) - (a.confirms || 0));
+    const perks = rules
+      .filter((r) => r.kind === "perk")
+      .sort((a, b) => (b.toValue / b.fromValue) - (a.toValue / a.fromValue));
 
     const fullLine = fullRateHTML(rules);
     $("#app").innerHTML = `
@@ -320,7 +341,13 @@
         <div class="line"></div>
         <button class="btn btn-ghost" data-add-rule="redeem" data-mall="${esc(mall.id)}">＋ 记录一条</button>
       </div>
-      ${redeems.length ? `<div class="rule-list">${redeems.map(ruleCard).join("")}</div>` : `<div class="empty"><span class="emoji">🎟️</span>还没有兑换规则的记录，快来补充第一条</div>`}`;
+      ${redeems.length ? `<div class="rule-list">${redeems.map(ruleCard).join("")}</div>` : `<div class="empty"><span class="emoji">🎟️</span>还没有兑换规则的记录，快来补充第一条</div>`}
+      <div class="section-head">
+        <h3>🎁 消费赠礼（满额直接送）</h3>
+        <div class="line"></div>
+        <button class="btn btn-ghost" data-add-rule="perk" data-mall="${esc(mall.id)}">＋ 记录一条</button>
+      </div>
+      ${perks.length ? `<div class="rule-list">${perks.map(ruleCard).join("")}</div>` : `<div class="empty"><span class="emoji">🎁</span>还没有赠礼记录，快来补充第一条</div>`}`;
   }
 
   function initMallDialog() {
@@ -619,8 +646,11 @@
       if (!btn) return;
       $$("#rule-kind .seg").forEach((b) => b.classList.toggle("active", b === btn));
       state.ruleKind = btn.dataset.kind;
+      if (state.ruleKind === "perk") $("#rule-form").redeemType.value = "parking";
       updateRuleLabels();
     });
+
+    $("#rule-form").redeemType.addEventListener("change", updateRuleLabels);
 
     $("#rule-form").addEventListener("submit", async (e) => {
       e.preventDefault();
@@ -631,7 +661,11 @@
         scene: f.scene.value.trim(),
         fromValue: parseFloat(f.fromValue.value),
         toValue: parseFloat(f.toValue.value),
-        redeemType: state.ruleKind === "redeem" ? f.redeemType.value : undefined,
+        redeemType: state.ruleKind === "redeem" || state.ruleKind === "perk" ? f.redeemType.value : undefined,
+        rewardHours:
+          state.ruleKind === "perk" && f.redeemType.value === "parking" && f.rewardHours.value
+            ? parseFloat(f.rewardHours.value)
+            : undefined,
         tags: f.tags.value.split(/[,，]/).map((t) => t.trim()).filter(Boolean),
         note: f.note.value.trim(),
         source: f.source.value.trim(),
@@ -696,12 +730,13 @@
       const addBtn = e.target.closest("[data-add-rule]");
       if (addBtn) {
         state.draftMallId = addBtn.dataset.mall;
-        state.ruleKind = addBtn.dataset.addRule;
-        $$("#rule-kind .seg").forEach((b) => b.classList.toggle("active", b.dataset.kind === state.ruleKind));
-        updateRuleLabels();
         const form = $("#rule-form");
         form.reset();
         form.date.value = new Date().toISOString().slice(0, 10);
+        state.ruleKind = addBtn.dataset.addRule;
+        if (state.ruleKind === "perk") form.redeemType.value = "parking";
+        $$("#rule-kind .seg").forEach((b) => b.classList.toggle("active", b.dataset.kind === state.ruleKind));
+        updateRuleLabels();
         openDialog("#rule-dialog");
         return;
       }
@@ -735,13 +770,19 @@
   }
 
   function updateRuleLabels() {
-    $("#rule-type-field").hidden = state.ruleKind !== "redeem";
+    const f = $("#rule-form");
+    const showType = state.ruleKind === "redeem" || state.ruleKind === "perk";
+    $("#rule-type-field").hidden = !showType;
+    $("#rule-hours-field").hidden = !(state.ruleKind === "perk" && f.redeemType.value === "parking");
     if (state.ruleKind === "earn") {
       $("#rule-from-label").innerHTML = '消费金额（元）<em>*</em>';
       $("#rule-to-label").innerHTML = '获得积分 <em>*</em>';
-    } else {
+    } else if (state.ruleKind === "redeem") {
       $("#rule-from-label").innerHTML = '所需积分 <em>*</em>';
       $("#rule-to-label").innerHTML = '抵扣价值（元）<em>*</em>';
+    } else {
+      $("#rule-from-label").innerHTML = '单笔实付满（元）<em>*</em>';
+      $("#rule-to-label").innerHTML = '赠出价值（元）<em>*</em>';
     }
   }
 

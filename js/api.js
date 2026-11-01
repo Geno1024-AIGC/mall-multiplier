@@ -136,12 +136,14 @@
       async createRule(data) {
         const db = await Demo.loadDb();
         const redeemType =
-          data.kind === "redeem"
+          data.kind === "redeem" || data.kind === "perk"
             ? data.redeemType === "parking" || data.redeemType === "coupon"
               ? data.redeemType
-              : (data.tags || []).includes("停车")
+              : data.kind === "perk"
                 ? "parking"
-                : "coupon"
+                : (data.tags || []).includes("停车")
+                  ? "parking"
+                  : "coupon"
             : undefined;
         const rule = {
           id: Demo.newId("r"),
@@ -152,6 +154,7 @@
           fromValue: data.fromValue,
           toValue: data.toValue,
           redeemType,
+          rewardHours: data.kind === "perk" && redeemType === "parking" ? data.rewardHours || undefined : undefined,
           note: data.note || "",
           source: data.source || "",
           date: data.date || new Date().toISOString().slice(0, 10),

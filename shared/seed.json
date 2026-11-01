@@ -41,6 +41,12 @@
       "note": "分档兑换：3000 分兑 10 元、15000 分兑 50 元、30000 分兑 100 元，三档汇率相同",
       "source": "本站示例", "date": "2026-11-01",
       "confirms": 0, "outdated": 0
+    },
+    {
+      "id": "r7", "mallId": "m1", "kind": "perk", "scene": "单笔实付满额礼", "redeemType": "parking",
+      "tags": ["停车"], "fromValue": 168, "toValue": 15, "rewardHours": 3,
+      "note": "积分与满额赠礼可叠加", "source": "本站示例", "date": "2026-11-01",
+      "confirms": 0, "outdated": 0
     }
   ]
 }

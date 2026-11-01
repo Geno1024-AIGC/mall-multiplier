@@ -4,6 +4,7 @@
 
 - **10 元攒多少积分**——积分获取规则（全场 / 会员日 / 特定卡种…）
 - **100 积分值多少钱**——积分兑换规则（停车券 / 优惠券 / 消费抵扣…）
+- **满额直接送**——消费赠礼（kind=perk）：单笔实付满 X 元送停车券/优惠券，标注额外返值率，可与积分体系叠加
 - **全链路倍率**——同一商场两者相乘得到（例如 10 元 1 积分、100 积分换 10 元，则消费 1000 元返 10 元，即 **100:1**），主页会展示该理论值，数字越小越划算（可在 ⚙️ 设置切换为返现百分比 1/N，数字越大越划算）
 - **优惠券视角 vs 停车券视角**——兑换记录区分「🎟️ 券类」与「🅿️ 停车类」（`redeemType` 字段，未标注时按是否带「停车」标签推导），两者的全链路倍率分开计算：商场卡片分别展示两个值；当两个视角结果不同时，商场详情页顶部可一键切换视角（全局生效）
 - 人人可看、人人可补，网友对每条记录投票「✅ 已确认 / ⚠️ 已失效」
@@ -47,7 +48,7 @@ npm start          # 默认 http://localhost:8787，PORT 环境变量可改
 | GET | `/api/malls` | 商场列表（按记录数排序） |
 | POST | `/api/malls` | 新增商场 `{name, city, address?}` |
 | GET | `/api/rules?mall=<id>` | 倍率记录（可选按商场过滤） |
-| POST | `/api/rules` | 新增记录 `{mallId, kind, scene, fromValue, toValue, tags?, note?, source?, date?}`，`kind` 为 `earn`（fromValue=元, toValue=积分）或 `redeem`（fromValue=积分, toValue=元） |
+| POST | `/api/rules` | 新增记录 `{mallId, kind, scene, fromValue, toValue, redeemType?, rewardHours?, tags?, note?, source?, date?}`；`kind` 为 `earn`（fromValue=元, toValue=积分）、`redeem`（fromValue=积分, toValue=元）或 `perk`（fromValue=消费满额, toValue=赠出价值，`redeemType` 为赠出物类型，停车赠礼可带 `rewardHours` 小时数） |
 | POST | `/api/rules/:id/vote` | 投票 `{action: "confirm" | "outdated"}` |
 
 数据模型与 `shared/seed.json` 一致：字段 `confirms`/`outdated` 为「确认/失效」投票计数。

@@ -62,10 +62,12 @@ api.get("/rules", (req, res) => {
 });
 
 api.post("/rules", (req, res) => {
-  const { mallId, kind, scene, fromValue, toValue, redeemType, tags, note, source, date } = req.body || {};
+  const { mallId, kind, scene, fromValue, toValue, redeemType, rewardHours, tags, note, source, date } = req.body || {};
   const db = store.load();
   if (!db.malls.some((m) => m.id === mallId)) return badRequest(res, "商场不存在");
-  if (kind !== "earn" && kind !== "redeem") return badRequest(res, "kind 必须是 earn 或 redeem");
+  if (kind !== "earn" && kind !== "redeem" && kind !== "perk") {
+    return badRequest(res, "kind 必须是 earn、redeem 或 perk");
+  }
   if (!scene || !String(scene).trim()) return badRequest(res, "缺少适用场景");
   const from = num(fromValue);
   const to = num(toValue);
@@ -79,7 +81,12 @@ api.post("/rules", (req, res) => {
     if (redeemType === "parking" || redeemType === "coupon") type = redeemType;
     else if (tagList.includes("停车")) type = "parking";
     else type = "coupon";
+  } else if (kind === "perk") {
+    type = redeemType === "parking" || redeemType === "coupon" ? redeemType : "parking";
   }
+  const hours = num(rewardHours);
+  const perkHours =
+    kind === "perk" && type === "parking" && hours && hours > 0 ? hours : undefined;
   const rule = {
     id: "r" + crypto.randomBytes(6).toString("hex"),
     mallId,
@@ -89,6 +96,7 @@ api.post("/rules", (req, res) => {
     fromValue: from,
     toValue: to,
     redeemType: type,
+    rewardHours: perkHours,
     note: String(note || "").trim().slice(0, 120),
     source: String(source || "").trim().slice(0, 30),
     date: /^\d{4}-\d{2}-\d{2}$/.test(String(date || "")) ? date : new Date().toISOString().slice(0, 10),
