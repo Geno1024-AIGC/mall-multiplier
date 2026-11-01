@@ -152,12 +152,12 @@
         const list = rulesByMall[m.id] || [];
         const earns = bestEarn[m.id] ? `最高 <b>${fmt(bestEarn[m.id])} 积分/元</b>` : "暂无积分获取记录";
         const redeems = bestRedeem[m.id] ? `兑换 <b>¥${fmt(bestRedeem[m.id])}/百积分</b>` : "暂无兑换记录";
-        const full = fullRateText(list);
+        const full = fullCardHTML(list);
         return `
         <a class="mall-card" style="--h:${hue(m.name)}" href="#/mall/${encodeURIComponent(m.id)}">
           <h3>${esc(m.name)}</h3>
           <div class="where">📍 ${esc(m.city)}${m.address ? " · " + esc(m.address) : ""}</div>
-          <div class="brief"><span>📈 ${earns}</span><span>📉 ${redeems}</span>${full ? `<span>🧮 ${full}</span>` : ""}</div>
+          <div class="brief"><span>📈 ${earns}</span><span>📉 ${redeems}</span>${full}</div>
           <div class="count-line">已登记 ${list.length} 条倍率记录</div>
         </a>`;
       })
@@ -190,26 +190,73 @@
       }`;
   }
 
-  function fullRateText(rules) {
+  function isParkingRule(r) {
+    return r.redeemType === "parking" || (!r.redeemType && (r.tags || []).includes("停车"));
+  }
+
+  function fullRateInfo(rules) {
     const earns = rules.filter((r) => r.kind === "earn" && r.fromValue > 0);
     const redeems = rules.filter((r) => r.kind === "redeem" && r.fromValue > 0);
     if (!earns.length || !redeems.length) return null;
     const e = Math.max(...earns.map((r) => r.toValue / r.fromValue));
-    const v = Math.max(...redeems.map((r) => r.toValue / r.fromValue));
+    const rateOf = (list) => (list.length ? Math.max(...list.map((r) => r.toValue / r.fromValue)) : null);
+    const coupon = rateOf(redeems.filter((r) => !isParkingRule(r)));
+    const parking = rateOf(redeems.filter(isParkingRule));
+    if (!(e > 0)) return null;
+    return { e, coupon, parking };
+  }
+
+  function perspVal(e, v) {
     if (!(e > 0) || !(v > 0)) return null;
-    return Api.getRatioStyle() === "cash"
-      ? `理论返现 <b>${fmt(e * v * 100)}%</b>`
-      : `理论全链路 <b>${fmt(1 / (e * v))}:1</b>`;
+    return Api.getRatioStyle() === "cash" ? `${fmt(e * v * 100)}%（返现）` : `${fmt(1 / (e * v))}:1`;
+  }
+
+  function fullRateHTML(rules) {
+    const info = fullRateInfo(rules);
+    if (!info) return "";
+    let vp = Api.getViewpoint();
+    if (!info.coupon) vp = "parking";
+    else if (!info.parking) vp = "coupon";
+    const vc = perspVal(info.e, info.coupon);
+    const vpVal = perspVal(info.e, info.parking);
+    if (vc && vpVal && vc !== vpVal) {
+      const dirs = vp === "parking" ? [vpVal, vc] : [vc, vpVal];
+      return `<div class="rule-rate" style="margin-top:10px"><span class="sub">
+        <button class="mini-seg ${vp === "coupon" ? "on" : ""}" data-persp="coupon">🎟️ 优惠券</button>
+        <button class="mini-seg ${vp === "parking" ? "on" : ""}" data-persp="parking">🅿️ 停车券</button>
+        全链路 <b>${vp === "parking" ? dirs[0] : dirs[1]}</b>，按当前记录估算</span></div>`;
+    }
+    const one = vc || vpVal;
+    return one ? `<div class="rule-rate" style="margin-top:10px"><span class="sub">🧮 理论全链路 <b>${one}</b>，按当前记录估算</span></div>` : "";
+  }
+
+  function fullCardHTML(rules) {
+    const info = fullRateInfo(rules);
+    if (!info) return "";
+    const vc = perspVal(info.e, info.coupon);
+    const vpVal = perspVal(info.e, info.parking);
+    if (vc && vpVal) {
+      if (vc === vpVal) return `<span>🧮 理论全链路 <b>${vc}</b></span>`;
+      return `<span>🧮 券 <b>${vc}</b> · 停车 <b>${vpVal}</b></span>`;
+    }
+    const one = vc || vpVal;
+    return one ? `<span>🧮 理论全链路 <b>${one}</b></span>` : "";
   }
 
   function ruleCard(rule) {
     const info = rateInfo(rule);
     const mine = votes[rule.id];
+    const tags = rule.tags || [];
+    let typeBadge = "";
+    if (rule.kind === "redeem" && rule.redeemType) {
+      if (rule.redeemType === "parking" && !tags.includes("停车")) typeBadge = '<span class="tag">🅿️ 停车</span>';
+      else if (rule.redeemType === "coupon" && !tags.some((t) => /券/.test(t))) typeBadge = '<span class="tag">🎟️ 券</span>';
+    }
     return `
       <article class="rule-card ${rule.outdated > rule.confirms ? "stale" : ""}" style="animation-delay:${Math.random() * 0.15}s">
         <div class="rule-top">
           <span class="scene">${esc(rule.scene)}</span>
-          ${(rule.tags || []).map((t) => `<span class="tag">${esc(t)}</span>`).join("")}
+          ${typeBadge}${tags.map((t) => `<span class="tag">${esc(t)}</span>`).join("")}
         </div>
         <div class="rule-rate">
           <span class="main">${esc(info.main)}</span>
@@ -237,8 +284,7 @@
       .filter((r) => r.kind === "redeem")
       .sort((a, b) => (b.confirms || 0) - (a.confirms || 0));
 
-    const full = fullRateText(rules);
-    const fullLine = full ? `<div class="rule-rate" style="margin-top:10px"><span class="sub">🧮 ${full}，按当前记录估算</span></div>` : "";
+    const fullLine = fullRateHTML(rules);
     $("#app").innerHTML = `
       <button class="back" data-back>← 返回商场列表</button>
       <section class="mall-head" style="--h:${hue(mall.name)}">
@@ -332,6 +378,7 @@
         scene: f.scene.value.trim(),
         fromValue: parseFloat(f.fromValue.value),
         toValue: parseFloat(f.toValue.value),
+        redeemType: state.ruleKind === "redeem" ? f.redeemType.value : undefined,
         tags: f.tags.value.split(/[,，]/).map((t) => t.trim()).filter(Boolean),
         note: f.note.value.trim(),
         source: f.source.value.trim(),
@@ -362,6 +409,15 @@
     });
 
     $("#app").addEventListener("click", async (e) => {
+      const perspBtn = e.target.closest("[data-persp]");
+      if (perspBtn) {
+        e.preventDefault();
+        if (Api.getViewpoint() !== perspBtn.dataset.persp) {
+          Api.setViewpoint(perspBtn.dataset.persp);
+          render();
+        }
+        return;
+      }
       if (e.target.closest("[data-back]")) {
         location.hash = "#/";
         return;
@@ -408,6 +464,7 @@
   }
 
   function updateRuleLabels() {
+    $("#rule-type-field").hidden = state.ruleKind !== "redeem";
     if (state.ruleKind === "earn") {
       $("#rule-from-label").innerHTML = '消费金额（元）<em>*</em>';
       $("#rule-to-label").innerHTML = '获得积分 <em>*</em>';

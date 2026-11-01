@@ -62,7 +62,7 @@ api.get("/rules", (req, res) => {
 });
 
 api.post("/rules", (req, res) => {
-  const { mallId, kind, scene, fromValue, toValue, tags, note, source, date } = req.body || {};
+  const { mallId, kind, scene, fromValue, toValue, redeemType, tags, note, source, date } = req.body || {};
   const db = store.load();
   if (!db.malls.some((m) => m.id === mallId)) return badRequest(res, "商场不存在");
   if (kind !== "earn" && kind !== "redeem") return badRequest(res, "kind 必须是 earn 或 redeem");
@@ -71,16 +71,24 @@ api.post("/rules", (req, res) => {
   const to = num(toValue);
   if (from === null || from <= 0) return badRequest(res, "fromValue 必须是正数");
   if (to === null || to < 0) return badRequest(res, "toValue 不能为负数");
+  const tagList = Array.isArray(tags)
+    ? tags.map((t) => String(t).trim().slice(0, 20)).filter(Boolean).slice(0, 5)
+    : [];
+  let type;
+  if (kind === "redeem") {
+    if (redeemType === "parking" || redeemType === "coupon") type = redeemType;
+    else if (tagList.includes("停车")) type = "parking";
+    else type = "coupon";
+  }
   const rule = {
     id: "r" + crypto.randomBytes(6).toString("hex"),
     mallId,
     kind,
     scene: String(scene).trim().slice(0, 60),
-    tags: Array.isArray(tags)
-      ? tags.map((t) => String(t).trim().slice(0, 20)).filter(Boolean).slice(0, 5)
-      : [],
+    tags: tagList,
     fromValue: from,
     toValue: to,
+    redeemType: type,
     note: String(note || "").trim().slice(0, 120),
     source: String(source || "").trim().slice(0, 30),
     date: /^\d{4}-\d{2}-\d{2}$/.test(String(date || "")) ? date : new Date().toISOString().slice(0, 10),

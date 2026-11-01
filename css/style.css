@@ -439,6 +439,22 @@ main { max-width: 1120px; margin: 0 auto; padding: clamp(20px, 4vw, 44px) clamp(
 .vote-btn:disabled { cursor: default; opacity: 0.85; }
 .vote-btn.mine { border-color: var(--accent); color: var(--accent); background: color-mix(in srgb, var(--accent) 10%, transparent); }
 
+.mini-seg {
+  padding: 3px 12px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--surface-solid);
+  color: var(--text-2);
+  font: inherit;
+  font-size: 0.74rem;
+  font-weight: 600;
+  cursor: pointer;
+  margin: 0 3px;
+  transition: all 0.15s;
+}
+.mini-seg:hover { border-color: var(--accent); color: var(--accent); }
+.mini-seg.on { background: var(--grad); color: #fff; border-color: transparent; box-shadow: 0 3px 10px -3px rgba(99, 102, 241, 0.5); }
+
 .footer { text-align: center; padding: 30px 16px 40px; color: var(--text-3); font-size: 0.8rem; }
 
 .dlg {
@@ -459,7 +475,7 @@ main { max-width: 1120px; margin: 0 auto; padding: clamp(20px, 4vw, 44px) clamp(
 .field { display: block; margin-bottom: 14px; flex: 1; }
 .field span { display: block; font-size: 0.84rem; font-weight: 600; margin-bottom: 6px; color: var(--text-2); }
 .field em { color: var(--bad); font-style: normal; }
-.field input {
+.field input, .field select {
   width: 100%;
   padding: 10px 13px;
   border-radius: 11px;
@@ -470,7 +486,7 @@ main { max-width: 1120px; margin: 0 auto; padding: clamp(20px, 4vw, 44px) clamp(
   outline: none;
   transition: border-color 0.2s, box-shadow 0.2s;
 }
-.field input:focus { border-color: var(--accent); box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.15); }
+.field input:focus, .field select:focus { border-color: var(--accent); box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.15); }
 .field-row { display: flex; gap: 12px; }
 
 .segmented {

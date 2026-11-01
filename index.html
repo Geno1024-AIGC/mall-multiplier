@@ -79,6 +79,13 @@
           <input name="toValue" type="number" min="0" step="any" required placeholder="1">
         </label>
       </div>
+      <label class="field" id="rule-type-field" hidden>
+        <span>兑换类型</span>
+        <select name="redeemType">
+          <option value="coupon">🎟️ 优惠券 / 消费抵扣</option>
+          <option value="parking">🅿️ 停车券</option>
+        </select>
+      </label>
       <label class="field">
         <span>标签</span>
         <input name="tags" type="text" maxlength="60" placeholder="逗号分隔，例如：会员日, 停车">

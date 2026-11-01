@@ -2,6 +2,7 @@
   const BASE_KEY = "mallrate_api_base";
   const DEMO_DB_KEY = "mallrate_demo_db";
   const RATIO_KEY = "mallrate_ratio_style";
+  const VIEWPOINT_KEY = "mallrate_viewpoint";
 
   function getRatioStyle() {
     return localStorage.getItem(RATIO_KEY) === "cash" ? "cash" : "ratio";
@@ -9,6 +10,14 @@
 
   function setRatioStyle(v) {
     localStorage.setItem(RATIO_KEY, v === "cash" ? "cash" : "ratio");
+  }
+
+  function getViewpoint() {
+    return localStorage.getItem(VIEWPOINT_KEY) === "parking" ? "parking" : "coupon";
+  }
+
+  function setViewpoint(v) {
+    localStorage.setItem(VIEWPOINT_KEY, v === "parking" ? "parking" : "coupon");
   }
 
   function getBase() {
@@ -67,6 +76,8 @@
     ping,
     getRatioStyle,
     setRatioStyle,
+    getViewpoint,
+    setViewpoint,
     remote: {
       async listMalls() {
         return request("/api/malls");
@@ -113,6 +124,14 @@
       },
       async createRule(data) {
         const db = await Demo.loadDb();
+        const redeemType =
+          data.kind === "redeem"
+            ? data.redeemType === "parking" || data.redeemType === "coupon"
+              ? data.redeemType
+              : (data.tags || []).includes("停车")
+                ? "parking"
+                : "coupon"
+            : undefined;
         const rule = {
           id: Demo.newId("r"),
           mallId: data.mallId,
@@ -121,6 +140,7 @@
           tags: data.tags || [],
           fromValue: data.fromValue,
           toValue: data.toValue,
+          redeemType,
           note: data.note || "",
           source: data.source || "",
           date: data.date || new Date().toISOString().slice(0, 10),

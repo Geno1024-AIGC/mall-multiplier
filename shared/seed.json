@@ -18,13 +18,13 @@
       "confirms": 5, "outdated": 0
     },
     {
-      "id": "r3", "mallId": "m1", "kind": "redeem", "scene": "停车费抵扣",
+      "id": "r3", "mallId": "m1", "kind": "redeem", "scene": "停车费抵扣", "redeemType": "parking",
       "tags": ["停车"], "fromValue": 300, "toValue": 5,
       "note": "当日消费满100元另赠1小时免费停车", "source": "网友实测", "date": "2026-10-15",
       "confirms": 8, "outdated": 0
     },
     {
-      "id": "r4", "mallId": "m1", "kind": "redeem", "scene": "通用现金券兑换",
+      "id": "r4", "mallId": "m1", "kind": "redeem", "scene": "通用现金券兑换", "redeemType": "coupon",
       "tags": ["优惠券"], "fromValue": 100, "toValue": 1,
       "note": "100积分起兑，前台或小程序兑换", "source": "商场公示", "date": "2026-10-01",
       "confirms": 3, "outdated": 0
@@ -36,7 +36,7 @@
       "confirms": 6, "outdated": 0
     },
     {
-      "id": "r6", "mallId": "m2", "kind": "redeem", "scene": "消费金额抵扣",
+      "id": "r6", "mallId": "m2", "kind": "redeem", "scene": "消费金额抵扣", "redeemType": "coupon",
       "tags": ["消费抵扣"], "fromValue": 100, "toValue": 1,
       "note": "结账时直接抵扣，不找零", "source": "网友实测", "date": "2026-10-20",
       "confirms": 9, "outdated": 2
@@ -48,7 +48,7 @@
       "confirms": 4, "outdated": 0
     },
     {
-      "id": "r8", "mallId": "m3", "kind": "redeem", "scene": "停车费抵扣（工作日）",
+      "id": "r8", "mallId": "m3", "kind": "redeem", "scene": "停车费抵扣（工作日）", "redeemType": "parking",
       "tags": ["停车"], "fromValue": 500, "toValue": 5,
       "note": "工作日全天封顶使用", "source": "会员群", "date": "2026-10-12",
       "confirms": 7, "outdated": 1
