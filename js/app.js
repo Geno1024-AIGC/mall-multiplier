@@ -327,29 +327,79 @@
     return region;
   }
 
-  async function reverseGeocode(coords) {
-    const key = Api.getAmapKey();
-    if (key) {
-      const url =
-        `https://restapi.amap.com/v3/geocode/regeo` +
-        `?location=${coords.longitude},${coords.latitude}&key=${encodeURIComponent(key)}`;
-      let data;
-      try {
-        const res = await fetch(url, { signal: AbortSignal.timeout(8000) });
-        data = await res.json();
-      } catch {
-        const err = new Error("amap unreachable");
-        err.hint = "高德接口连接失败，请检查网络或 Key 后重试";
-        throw err;
-      }
-      if (data.status !== "1" || !data.regeocode) {
-        const err = new Error(data.info || "amap failed");
-        err.hint = "高德 Key 校验失败，请确认 ⚙️ 设置里填的是「Web 服务」类型 Key";
-        throw err;
-      }
-      const comp = data.regeocode.addressComponent || {};
-      return { province: comp.province, city: Array.isArray(comp.city) ? "" : comp.city };
+  const geoCache = {};
+  const MUNICIPALITIES = ["北京市", "天津市", "上海市", "重庆市", "香港特别行政区", "澳门特别行政区"];
+
+  async function loadGeo(adcode) {
+    if (!geoCache[adcode]) {
+      const res = await fetch(
+        `https://geo.datav.aliyun.com/areas_v3/bound/${adcode}_full.json`,
+        { signal: AbortSignal.timeout(9000) }
+      );
+      if (!res.ok) throw new Error("datav HTTP " + res.status);
+      geoCache[adcode] = await res.json();
     }
+    return geoCache[adcode];
+  }
+
+  function pointInPolygon(pt, ring) {
+    let inside = false;
+    for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) {
+      const xi = ring[i][0], yi = ring[i][1], xj = ring[j][0], yj = ring[j][1];
+      const crosses = yi > pt[1] !== yj > pt[1] && pt[0] < ((xj - xi) * (pt[1] - yi)) / (yj - yi) + xi;
+      if (crosses) inside = !inside;
+    }
+    return inside;
+  }
+
+  function pointInGeometry(pt, geom) {
+    const polys =
+      geom.type === "Polygon" ? [geom.coordinates] :
+      geom.type === "MultiPolygon" ? geom.coordinates : [];
+    for (const poly of polys) {
+      if (poly.length && pointInPolygon(pt, poly[0])) {
+        let holeHit = false;
+        for (let k = 1; k < poly.length; k++) {
+          if (pointInPolygon(pt, poly[k])) { holeHit = true; break; }
+        }
+        if (!holeHit) return true;
+      }
+    }
+    return false;
+  }
+
+  function findFeatByPoint(features, pt) {
+    return (features || []).find((f) => f.geometry && pointInGeometry(pt, f.geometry)) || null;
+  }
+
+  function matchRegion(name) {
+    if (!name) return null;
+    return Regions.find((r) => name.includes(r.n) || r.n.includes(name)) || null;
+  }
+
+  async function amapReverse(coords) {
+    const url =
+      `https://restapi.amap.com/v3/geocode/regeo` +
+      `?location=${coords.longitude},${coords.latitude}&key=${encodeURIComponent(Api.getAmapKey())}`;
+    let data;
+    try {
+      const res = await fetch(url, { signal: AbortSignal.timeout(8000) });
+      data = await res.json();
+    } catch {
+      const err = new Error("amap unreachable");
+      err.hint = "高德接口连接失败，请检查网络或 Key 后重试";
+      throw err;
+    }
+    if (data.status !== "1" || !data.regeocode) {
+      const err = new Error(data.info || "amap failed");
+      err.hint = "高德 Key 校验失败，请确认 ⚙️ 设置里填的是「Web 服务」类型 Key";
+      throw err;
+    }
+    const comp = data.regeocode.addressComponent || {};
+    return { province: comp.province, city: Array.isArray(comp.city) ? "" : comp.city };
+  }
+
+  async function nominatimReverse(coords) {
     const url =
       `https://nominatim.openstreetmap.org/reverse` +
       `?lat=${coords.latitude}&lon=${coords.longitude}&zoom=10&accept-language=zh-CN&format=json`;
@@ -358,12 +408,34 @@
       res = await fetch(url, { signal: AbortSignal.timeout(6000) });
     } catch {
       const err = new Error("nominatim unreachable");
-      err.hint = "默认定位服务（OpenStreetMap）在境内不可达，推荐在 ⚙️ 设置填入高德 Web Key";
+      err.hint = "定位数据源暂不可达，请稍后重试或手动选择";
       throw err;
     }
     if (!res.ok) return { province: "", city: "" };
     const addr = (await res.json()).address || {};
     return { province: addr.state || addr.region || "", city: addr.city || addr.county || "" };
+  }
+
+  async function datavReverse(coords) {
+    const pt = [coords.longitude, coords.latitude];
+    const provFeat = findFeatByPoint((await loadGeo("100000")).features, pt);
+    if (!provFeat) return { province: "", city: "" };
+    const provRegion = matchRegion(provFeat.properties.name);
+    if (!provRegion) return { province: "", city: "" };
+    if (MUNICIPALITIES.includes(provRegion.n)) {
+      return { province: provRegion.n, city: provRegion.c[0] };
+    }
+    const cityFeat = findFeatByPoint((await loadGeo(provRegion.code)).features, pt);
+    return { province: provRegion.n, city: (cityFeat && cityFeat.properties.name) || "" };
+  }
+
+  async function reverseGeocode(coords) {
+    if (Api.getAmapKey()) return amapReverse(coords);
+    try {
+      return await datavReverse(coords);
+    } catch {
+      return nominatimReverse(coords);
+    }
   }
 
   function bindStatic() {
