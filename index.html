@@ -57,6 +57,7 @@
           </select>
         </label>
       </div>
+      <button type="button" id="geo-btn" class="btn btn-ghost">📍 自动定位省市</button>
       <label class="field">
         <span>地址</span>
         <input name="address" type="text" maxlength="80" placeholder="选填">
@@ -130,6 +131,10 @@
       </div>
       <p class="dlg-hint">全链路值：把同一商场的最高获取率与最高兑换率相乘，为理论值，仅代表理想消费闭环。</p>
       <p class="dlg-hint">填入后端地址即可联网同步，留空则使用浏览器本地存储（演示模式）。<br>本地跑后端时填：<code>http://localhost:8787</code></p>
+      <label class="field">
+        <span>高德 Web Key（可选，用于自动定位）</span>
+        <input name="amapKey" type="text" placeholder="lbs.amap.com 免费申请「Web 服务」类型 Key">
+      </label>
       <label class="field">
         <span>API 地址</span>
         <input name="base" type="url" placeholder="https://your-server.example.com">

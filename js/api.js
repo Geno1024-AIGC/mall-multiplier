@@ -3,6 +3,15 @@
   const DEMO_DB_KEY = "mallrate_demo_db";
   const RATIO_KEY = "mallrate_ratio_style";
   const VIEWPOINT_KEY = "mallrate_viewpoint";
+  const AMAP_KEY = "mallrate_amap_key";
+
+  function getAmapKey() {
+    return localStorage.getItem(AMAP_KEY) || "";
+  }
+
+  function setAmapKey(v) {
+    localStorage.setItem(AMAP_KEY, String(v || "").trim());
+  }
 
   function getRatioStyle() {
     return localStorage.getItem(RATIO_KEY) === "cash" ? "cash" : "ratio";
@@ -78,6 +87,8 @@
     setRatioStyle,
     getViewpoint,
     setViewpoint,
+    getAmapKey,
+    setAmapKey,
     remote: {
       async listMalls() {
         return request("/api/malls");

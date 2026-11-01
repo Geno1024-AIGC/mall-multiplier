@@ -317,6 +317,55 @@
     cSel.disabled = true;
   }
 
+  function fillCities(provName) {
+    const cSel = $("#mall-city");
+    const region = Regions.find((r) => r.n === provName);
+    cSel.innerHTML = region
+      ? '<option value="">选择城市</option>' + region.c.map((n) => `<option value="${n}">${n}</option>`).join("")
+      : '<option value="">先选省级</option>';
+    cSel.disabled = !region;
+    return region;
+  }
+
+  async function reverseGeocode(coords) {
+    const key = Api.getAmapKey();
+    if (key) {
+      const url =
+        `https://restapi.amap.com/v3/geocode/regeo` +
+        `?location=${coords.longitude},${coords.latitude}&key=${encodeURIComponent(key)}`;
+      let data;
+      try {
+        const res = await fetch(url, { signal: AbortSignal.timeout(8000) });
+        data = await res.json();
+      } catch {
+        const err = new Error("amap unreachable");
+        err.hint = "高德接口连接失败，请检查网络或 Key 后重试";
+        throw err;
+      }
+      if (data.status !== "1" || !data.regeocode) {
+        const err = new Error(data.info || "amap failed");
+        err.hint = "高德 Key 校验失败，请确认 ⚙️ 设置里填的是「Web 服务」类型 Key";
+        throw err;
+      }
+      const comp = data.regeocode.addressComponent || {};
+      return { province: comp.province, city: Array.isArray(comp.city) ? "" : comp.city };
+    }
+    const url =
+      `https://nominatim.openstreetmap.org/reverse` +
+      `?lat=${coords.latitude}&lon=${coords.longitude}&zoom=10&accept-language=zh-CN&format=json`;
+    let res;
+    try {
+      res = await fetch(url, { signal: AbortSignal.timeout(6000) });
+    } catch {
+      const err = new Error("nominatim unreachable");
+      err.hint = "默认定位服务（OpenStreetMap）在境内不可达，推荐在 ⚙️ 设置填入高德 Web Key";
+      throw err;
+    }
+    if (!res.ok) return { province: "", city: "" };
+    const addr = (await res.json()).address || {};
+    return { province: addr.state || addr.region || "", city: addr.city || addr.county || "" };
+  }
+
   function bindStatic() {
     $("#add-mall-btn").addEventListener("click", () => {
       initMallDialog();
@@ -324,12 +373,50 @@
     });
 
     $("#mall-province").addEventListener("change", (e) => {
-      const cSel = $("#mall-city");
-      const region = Regions.find((r) => r.n === e.target.value);
-      cSel.innerHTML = region
-        ? '<option value="">选择城市</option>' + region.c.map((n) => `<option value="${n}">${n}</option>`).join("")
-        : '<option value="">先选省级</option>';
-      cSel.disabled = !region;
+      fillCities(e.target.value);
+    });
+
+    $("#geo-btn").addEventListener("click", () => {
+      if (!navigator.geolocation) {
+        toast("当前浏览器不支持地理定位", "bad");
+        return;
+      }
+      toast("正在定位，请稍候…");
+      navigator.geolocation.getCurrentPosition(
+        async (pos) => {
+          try {
+            const { province, city } = await reverseGeocode(pos.coords);
+            const guesses = [city, province].filter(Boolean);
+            let prov = null;
+            for (const g of guesses) {
+              prov = Regions.find((r) => g.includes(r.n) || r.n.includes(g));
+              if (prov) break;
+            }
+            if (!prov) {
+              toast("定位成功但未能匹配省份，请手动选择", "bad");
+              return;
+            }
+            $("#mall-province").value = prov.n;
+            const region = fillCities(prov.n);
+            let cityName = null;
+            for (const g of guesses) {
+              cityName = region.c.find((n) => g.includes(n) || n.includes(g));
+              if (cityName) break;
+            }
+            if (cityName) {
+              $("#mall-city").value = cityName;
+              toast("已定位至 " + cityName, "ok");
+            } else {
+              $("#mall-city").selectedIndex = 0;
+              toast("已定位省份，请继续选择城市", "ok");
+            }
+          } catch (err) {
+            toast(err.hint || "定位解析失败，请手动选择", "bad");
+          }
+        },
+        () => toast("定位失败，请允许定位权限或手动选择", "bad"),
+        { timeout: 10000 }
+      );
     });
     $("#search").addEventListener("input", (e) => {
       state.query = e.target.value;
@@ -341,7 +428,9 @@
     });
 
     $("#api-btn").addEventListener("click", () => {
-      $("#api-form").elements.base.value = Api.getBase();
+      const f = $("#api-form").elements;
+      f.base.value = Api.getBase();
+      f.amapKey.value = Api.getAmapKey();
       $$("#ratio-style .seg").forEach((b) => b.classList.toggle("active", b.dataset.style === Api.getRatioStyle()));
       openDialog("#api-dialog");
     });
@@ -354,7 +443,9 @@
 
     $("#api-form").addEventListener("submit", async (e) => {
       e.preventDefault();
-      Api.setBase(e.target.elements.base.value);
+      const f = e.target.elements;
+      Api.setBase(f.base.value);
+      Api.setAmapKey(f.amapKey.value);
       Api.setRatioStyle(($$("#ratio-style .seg").find((b) => b.classList.contains("active")) || {}).dataset?.style);
       $("#api-dialog").close();
       await initMode();
