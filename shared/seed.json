@@ -1,6 +1,7 @@
 {
   "malls": [
-    { "id": "m1", "name": "民盈国贸城", "city": "东莞市", "address": "鸿福东路（地铁2号线鸿福路站旁）", "createdAt": "2026-11-01" }
+    { "id": "m1", "name": "民盈国贸城", "city": "东莞市", "address": "鸿福东路（地铁2号线鸿福路站旁）", "createdAt": "2026-11-01" },
+    { "id": "m2", "name": "松山湖万象汇", "city": "东莞市", "address": "", "createdAt": "2026-11-01" }
   ],
   "rules": [
     {
@@ -19,6 +20,25 @@
       "id": "r3", "mallId": "m1", "kind": "redeem", "scene": "优惠券兑换", "redeemType": "coupon",
       "tags": ["优惠券"], "fromValue": 150, "toValue": 10,
       "note": "分档兑换：150 分兑 10 元、750 分兑 50 元、1500 分兑 100 元，三档汇率相同",
+      "source": "本站示例", "date": "2026-11-01",
+      "confirms": 0, "outdated": 0
+    },
+    {
+      "id": "r4", "mallId": "m2", "kind": "earn", "scene": "全场消费",
+      "tags": [], "fromValue": 1, "toValue": 1,
+      "note": "", "source": "本站示例", "date": "2026-11-01",
+      "confirms": 0, "outdated": 0
+    },
+    {
+      "id": "r5", "mallId": "m2", "kind": "redeem", "scene": "停车费抵扣", "redeemType": "parking",
+      "tags": ["停车"], "fromValue": 300, "toValue": 1,
+      "note": "", "source": "本站示例", "date": "2026-11-01",
+      "confirms": 0, "outdated": 0
+    },
+    {
+      "id": "r6", "mallId": "m2", "kind": "redeem", "scene": "优惠券兑换", "redeemType": "coupon",
+      "tags": ["优惠券"], "fromValue": 3000, "toValue": 10,
+      "note": "分档兑换：3000 分兑 10 元、15000 分兑 50 元、30000 分兑 100 元，三档汇率相同",
       "source": "本站示例", "date": "2026-11-01",
       "confirms": 0, "outdated": 0
     }
