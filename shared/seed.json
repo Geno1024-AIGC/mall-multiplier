@@ -14,6 +14,13 @@
       "tags": ["停车"], "fromValue": 15, "toValue": 1,
       "note": "", "source": "本站示例", "date": "2026-11-01",
       "confirms": 0, "outdated": 0
+    },
+    {
+      "id": "r3", "mallId": "m1", "kind": "redeem", "scene": "优惠券兑换", "redeemType": "coupon",
+      "tags": ["优惠券"], "fromValue": 150, "toValue": 10,
+      "note": "分档兑换：150 分兑 10 元、750 分兑 50 元、1500 分兑 100 元，三档汇率相同",
+      "source": "本站示例", "date": "2026-11-01",
+      "confirms": 0, "outdated": 0
     }
   ]
 }
