@@ -1,57 +1,19 @@
 {
   "malls": [
-    { "id": "m1", "name": "上海环球港", "city": "上海市", "address": "普陀区中山北路3300号", "createdAt": "2026-10-01" },
-    { "id": "m2", "name": "北京SKP", "city": "北京市", "address": "朝阳区建国路87号", "createdAt": "2026-10-02" },
-    { "id": "m3", "name": "深圳万象城", "city": "深圳市", "address": "罗湖区宝安南路1881号", "createdAt": "2026-10-03" }
+    { "id": "m1", "name": "民盈国贸城", "city": "东莞市", "address": "鸿福东路（地铁2号线鸿福路站旁）", "createdAt": "2026-11-01" }
   ],
   "rules": [
     {
-      "id": "r1", "mallId": "m1", "kind": "earn", "scene": "全场消费（普通会员）",
-      "tags": ["会员卡"], "fromValue": 1, "toValue": 1,
-      "note": "部分特殊品类（黄金、烟酒等）不计积分", "source": "商场公示", "date": "2026-10-01",
-      "confirms": 12, "outdated": 1
+      "id": "r1", "mallId": "m1", "kind": "earn", "scene": "全场消费",
+      "tags": [], "fromValue": 10, "toValue": 1,
+      "note": "", "source": "本站示例", "date": "2026-11-01",
+      "confirms": 0, "outdated": 0
     },
     {
-      "id": "r2", "mallId": "m1", "kind": "earn", "scene": "会员积分日全场消费",
-      "tags": ["会员日", "限时"], "fromValue": 1, "toValue": 2,
-      "note": "每月10日，需提前在会员小程序报名", "source": "会员群", "date": "2026-10-10",
-      "confirms": 5, "outdated": 0
-    },
-    {
-      "id": "r3", "mallId": "m1", "kind": "redeem", "scene": "停车费抵扣", "redeemType": "parking",
-      "tags": ["停车"], "fromValue": 300, "toValue": 5,
-      "note": "当日消费满100元另赠1小时免费停车", "source": "网友实测", "date": "2026-10-15",
-      "confirms": 8, "outdated": 0
-    },
-    {
-      "id": "r4", "mallId": "m1", "kind": "redeem", "scene": "通用现金券兑换", "redeemType": "coupon",
-      "tags": ["优惠券"], "fromValue": 100, "toValue": 1,
-      "note": "100积分起兑，前台或小程序兑换", "source": "商场公示", "date": "2026-10-01",
-      "confirms": 3, "outdated": 0
-    },
-    {
-      "id": "r5", "mallId": "m2", "kind": "earn", "scene": "全场消费（个人会员）",
-      "tags": ["会员卡"], "fromValue": 1, "toValue": 1,
-      "note": "SVIP 会员另有额外加成，欢迎补充", "source": "商场公示", "date": "2026-10-02",
-      "confirms": 6, "outdated": 0
-    },
-    {
-      "id": "r6", "mallId": "m2", "kind": "redeem", "scene": "消费金额抵扣", "redeemType": "coupon",
-      "tags": ["消费抵扣"], "fromValue": 100, "toValue": 1,
-      "note": "结账时直接抵扣，不找零", "source": "网友实测", "date": "2026-10-20",
-      "confirms": 9, "outdated": 2
-    },
-    {
-      "id": "r7", "mallId": "m3", "kind": "earn", "scene": "全场消费（含餐饮）",
-      "tags": ["会员卡"], "fromValue": 1, "toValue": 1,
-      "note": "五折及以下餐饮不计积分", "source": "商场公示", "date": "2026-10-03",
-      "confirms": 4, "outdated": 0
-    },
-    {
-      "id": "r8", "mallId": "m3", "kind": "redeem", "scene": "停车费抵扣（工作日）", "redeemType": "parking",
-      "tags": ["停车"], "fromValue": 500, "toValue": 5,
-      "note": "工作日全天封顶使用", "source": "会员群", "date": "2026-10-12",
-      "confirms": 7, "outdated": 1
+      "id": "r2", "mallId": "m1", "kind": "redeem", "scene": "停车费抵扣", "redeemType": "parking",
+      "tags": ["停车"], "fromValue": 15, "toValue": 1,
+      "note": "", "source": "本站示例", "date": "2026-11-01",
+      "confirms": 0, "outdated": 0
     }
   ]
 }

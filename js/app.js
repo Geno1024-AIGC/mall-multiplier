@@ -561,8 +561,18 @@
       const f = $("#api-form").elements;
       f.base.value = Api.getBase();
       f.amapKey.value = Api.getAmapKey();
+      $("#demo-reset").hidden = state.mode !== "demo";
       $$("#ratio-style .seg").forEach((b) => b.classList.toggle("active", b.dataset.style === Api.getRatioStyle()));
       openDialog("#api-dialog");
+    });
+
+    $("#demo-reset").addEventListener("click", async () => {
+      if (!confirm("确定重置演示数据吗？浏览器中保存的演示数据将被清空并重新载入示例。")) return;
+      localStorage.removeItem("mallrate_demo_db");
+      $("#api-dialog").close();
+      await initMode();
+      render();
+      toast("演示数据已重置 ✔", "ok");
     });
 
     $("#ratio-style").addEventListener("click", (e) => {
